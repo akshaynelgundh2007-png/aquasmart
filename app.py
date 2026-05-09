@@ -3,6 +3,15 @@ from flask import Flask, request, jsonify, send_from_directory
 import pickle, numpy as np, pandas as pd, json, os
 import urllib.request, urllib.parse
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
+print("DEBUG: API KEY is", os.getenv("GEMINI_API_KEY"))
+if os.getenv("GEMINI_API_KEY"):
+    import google.generativeai as genai
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+else:
+    genai = None
 
 app = Flask(__name__, static_folder='static')
 
@@ -283,6 +292,29 @@ def gen_recommendations(d,pred,prob,crop,soil):
     return recs
 
 def get_chat_response(msg):
+    if genai:
+        try:
+            # Prepare context for the AI
+            system_prompt = (
+                "You are the AquaSmart AI Assistant, an agricultural expert chatbot built into a smart irrigation app. "
+                "Keep your answers brief (max 3-4 sentences), friendly, and extremely helpful. "
+                "Use markdown formatting like **bold** where appropriate. "
+                "You have access to data about these crops: " + ", ".join(CROPS.keys()) + ". "
+            )
+            
+            # Initialize the model
+            model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_prompt)
+            
+            # Generate response
+            response = model.generate_content(msg)
+            return response.text.strip()
+        except Exception as e:
+            print(f"Gemini API Error: {e}")
+            # Fall back to hardcoded rules if Gemini fails
+            pass
+            
+    # --- Fallback Logic (used if no API key or API fails) ---
+    
     # 1. Match specific crop inquiries first
     crop_keys = list(CROPS.keys())
     if any(w in msg for w in crop_keys + ['crop', 'plant']): 

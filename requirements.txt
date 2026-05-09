@@ -4,3 +4,5 @@ numpy==2.4.4
 pandas==3.0.2
 scikit-learn==1.8.0
 gunicorn==21.2.0
+google-generativeai
+python-dotenv
