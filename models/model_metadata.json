@@ -1,0 +1,86 @@
+{
+  "model_name": "Logistic Regression",
+  "accuracy": 87.95,
+  "features": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall",
+    "soil_moisture"
+  ],
+  "feature_importance": {
+    "N": 0.1554,
+    "P": 0.2364,
+    "K": 0.2061,
+    "temperature": 0.579,
+    "humidity": 2.0682,
+    "ph": 0.2368,
+    "rainfall": 2.4265,
+    "soil_moisture": 0.9221
+  },
+  "confusion_matrix": [
+    [
+      209,
+      33
+    ],
+    [
+      20,
+      178
+    ]
+  ],
+  "training_samples": 1760,
+  "test_samples": 440,
+  "dataset_stats": {
+    "N": {
+      "min": 0.0,
+      "max": 140.0,
+      "mean": 50.55,
+      "std": 36.92
+    },
+    "P": {
+      "min": 5.0,
+      "max": 145.0,
+      "mean": 53.36,
+      "std": 32.99
+    },
+    "K": {
+      "min": 5.0,
+      "max": 205.0,
+      "mean": 48.15,
+      "std": 50.65
+    },
+    "temperature": {
+      "min": 8.83,
+      "max": 43.68,
+      "mean": 25.62,
+      "std": 5.06
+    },
+    "humidity": {
+      "min": 14.26,
+      "max": 99.98,
+      "mean": 71.48,
+      "std": 22.26
+    },
+    "ph": {
+      "min": 3.5,
+      "max": 9.94,
+      "mean": 6.47,
+      "std": 0.77
+    },
+    "rainfall": {
+      "min": 20.21,
+      "max": 298.56,
+      "mean": 103.46,
+      "std": 54.96
+    },
+    "soil_moisture": {
+      "min": 18.77,
+      "max": 82.82,
+      "mean": 53.2,
+      "std": 10.93
+    }
+  }
+}

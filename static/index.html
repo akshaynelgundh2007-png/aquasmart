@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSmart — Smart Irrigation Forecast</title>
+    <meta name="description" content="AI-powered smart irrigation system with real-time weather, ML predictions, crop calendar, and water savings calculator.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo"><i data-lucide="droplets"></i></div>
+            <div class="sidebar-brand">
+                <span class="sidebar-title">AquaSmart</span>
+                <span class="sidebar-sub">AI Irrigation</span>
+            </div>
+            <button class="sidebar-close" id="sidebarClose"><i data-lucide="x"></i></button>
+        </div>
+        <div class="sidebar-clock">
+            <div class="clock-time" id="clockTime">--:--:--</div>
+            <div class="clock-date" id="clockDate">--</div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item active" data-tab="home" id="navHome"><i data-lucide="home"></i><span>Home</span></a>
+            <a class="nav-item" data-tab="predict" id="navPredict"><i data-lucide="brain"></i><span>Predict</span></a>
+            <a class="nav-item" data-tab="weather" id="navWeather"><i data-lucide="cloud-sun"></i><span>Weather</span></a>
+            <a class="nav-item" data-tab="analytics" id="navAnalytics"><i data-lucide="bar-chart-3"></i><span>Analytics</span></a>
+            <a class="nav-item" data-tab="savings" id="navSavings"><i data-lucide="piggy-bank"></i><span>Water Savings</span></a>
+            <a class="nav-item" data-tab="calendar" id="navCalendar"><i data-lucide="calendar-days"></i><span>Crop Calendar</span></a>
+            <a class="nav-item" data-tab="map" id="navMap"><i data-lucide="map"></i><span>Region Map</span></a>
+            <a class="nav-item" data-tab="alerts" id="navAlerts"><i data-lucide="bell"></i><span>Alerts</span></a>
+            <a class="nav-item" data-tab="chat" id="navChat"><i data-lucide="message-circle"></i><span>AI Chat</span></a>
+            <a class="nav-item" data-tab="export" id="navExport"><i data-lucide="download"></i><span>Export</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="theme-toggle" id="themeToggle"><i data-lucide="moon"></i><span>Dark Mode</span></button>
+        </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header" id="mobileHeader">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i data-lucide="menu"></i></button>
+        <span class="mobile-title"><i data-lucide="droplets"></i> AquaSmart</span>
+        <button class="theme-toggle-mini" id="themeToggleMini"><i data-lucide="moon"></i></button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+
+        <!-- TAB: Home -->
+        <section class="tab-panel active" id="tabHome">
+            <div class="page-header"><h1>Welcome to <span class="g-text">AquaSmart</span></h1><p>AI-powered smart irrigation forecast system</p></div>
+            <div class="home-grid">
+                <div class="home-card card-status glass" id="homeStatus">
+                    <div class="status-icon" id="homeStatusIcon"><i data-lucide="droplets"></i></div>
+                    <h2 id="homeStatusText">Checking...</h2>
+                    <p id="homeStatusSub">Analyzing current conditions</p>
+                </div>
+                <div class="home-card card-weather glass" id="homeWeather">
+                    <div class="hw-top"><i data-lucide="cloud-sun"></i><span id="homeTemp">--°C</span></div>
+                    <div class="hw-desc" id="homeWeatherDesc">Loading weather...</div>
+                    <div class="hw-details">
+                        <span><i data-lucide="droplets"></i> <span id="homeHum">--%</span></span>
+                        <span><i data-lucide="wind"></i> <span id="homeWind">-- km/h</span></span>
+                        <span><i data-lucide="cloud-rain"></i> <span id="homeRain">-- mm</span></span>
+                    </div>
+                </div>
+                <div class="home-card card-model glass">
+                    <h3><i data-lucide="brain"></i> ML Model</h3>
+                    <div class="model-stats">
+                        <div class="ms"><span class="ms-val" id="homeAccuracy">--</span><span class="ms-label">Accuracy</span></div>
+                        <div class="ms"><span class="ms-val" id="homeSamples">--</span><span class="ms-label">Samples</span></div>
+                        <div class="ms"><span class="ms-val" id="homeModel">--</span><span class="ms-label">Algorithm</span></div>
+                    </div>
+                </div>
+                <div class="home-card card-quick glass">
+                    <h3><i data-lucide="zap"></i> Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button class="qa-btn" onclick="switchTab('predict')"><i data-lucide="scan-line"></i> Predict Now</button>
+                        <button class="qa-btn" onclick="switchTab('weather')"><i data-lucide="cloud-sun"></i> Weather</button>
+                        <button class="qa-btn" onclick="switchTab('chat')"><i data-lucide="message-circle"></i> Ask AI</button>
+                        <button class="qa-btn" onclick="switchTab('calendar')"><i data-lucide="calendar-days"></i> Crop Calendar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: Predict -->
+        <section class="tab-panel" id="tabPredict">
+            <div class="page-header"><h1>Irrigation <span class="g-text">Prediction</span></h1><p>Enter parameters for AI-powered irrigation analysis</p></div>
+            <div class="predict-layout">
+                <div class="predict-form glass">
+                    <div class="form-header"><h3><i data-lucide="sliders-horizontal"></i> Parameters</h3>
+                        <div class="form-actions">
+                            <button class="btn-sm" id="autoFillBtn"><i data-lucide="cloud-sun"></i> Auto-fill</button>
+                            <button class="btn-sm" id="randomBtn"><i data-lucide="shuffle"></i> Random</button>
+                        </div>
+                    </div>
+                    <form id="predictionForm">
+                        <div class="input-row">
+                            <div class="input-group"><label>City</label><select id="citySelect"><option value="">Select city...</option></select></div>
+                            <div class="input-group"><label>Crop Type</label><select id="cropSelect"><option value="rice">Rice</option><option value="wheat">Wheat</option><option value="maize">Maize</option><option value="cotton">Cotton</option><option value="sugarcane">Sugarcane</option><option value="tomato">Tomato</option><option value="potato">Potato</option><option value="chickpea">Chickpea</option><option value="banana">Banana</option><option value="mango">Mango</option><option value="grapes">Grapes</option><option value="groundnut">Groundnut</option></select></div>
+                            <div class="input-group"><label>Soil Type</label><select id="soilSelect"><option value="loamy">Loamy</option><option value="sandy">Sandy</option><option value="clay">Clay</option><option value="silt">Silt</option><option value="peat">Peat</option></select></div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group"><label><i data-lucide="atom"></i> Nitrogen (N) <span class="unit">kg/ha</span></label><input type="number" id="inputN" step="0.1" min="0" max="140" placeholder="0-140" required></div>
+                            <div class="input-group"><label><i data-lucide="atom"></i> Phosphorus (P) <span class="unit">kg/ha</span></label><input type="number" id="inputP" step="0.1" min="5" max="145" placeholder="5-145" required></div>
+                            <div class="input-group"><label><i data-lucide="atom"></i> Potassium (K) <span class="unit">kg/ha</span></label><input type="number" id="inputK" step="0.1" min="5" max="205" placeholder="5-205" required></div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group"><label><i data-lucide="thermometer"></i> Temperature <span class="unit">°C</span></label><input type="number" id="inputTemp" step="0.1" min="8" max="44" placeholder="8-44" required></div>
+                            <div class="input-group"><label><i data-lucide="cloud"></i> Humidity <span class="unit">%</span></label><input type="number" id="inputHumidity" step="0.1" min="14" max="100" placeholder="14-100" required></div>
+                            <div class="input-group"><label><i data-lucide="flask-conical"></i> Soil pH</label><input type="number" id="inputPH" step="0.01" min="3.5" max="9.5" placeholder="3.5-9.5" required></div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group"><label><i data-lucide="cloud-rain"></i> Rainfall <span class="unit">mm</span></label><input type="number" id="inputRainfall" step="0.1" min="20" max="300" placeholder="20-300" required></div>
+                            <div class="input-group"><label><i data-lucide="droplets"></i> Soil Moisture <span class="unit">%</span></label><input type="number" id="inputMoisture" step="0.1" min="10" max="90" placeholder="10-90" required></div>
+                        </div>
+                        <button type="submit" class="btn-primary btn-full" id="predictBtn"><i data-lucide="brain"></i> Predict Now</button>
+                    </form>
+                </div>
+                <div class="predict-result" id="predictResult">
+                    <div class="result-empty glass" id="resultEmpty"><div class="re-icon"><i data-lucide="scan-line"></i></div><h3>Awaiting Input</h3><p>Fill parameters and click Predict Now</p></div>
+                    <div class="result-card glass hidden" id="resultCard">
+                        <div class="result-big" id="resultBig"><div class="result-big-icon" id="resultBigIcon">✅</div><h2 id="resultBigText">--</h2><p id="resultReason">--</p></div>
+                        <div class="result-gauge"><div class="gauge-container"><svg viewBox="0 0 120 120" class="gauge-svg"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface2)" stroke-width="10"/><circle cx="60" cy="60" r="52" fill="none" stroke="var(--primary)" stroke-width="10" stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round" id="gaugeArc" transform="rotate(-90 60 60)"/></svg><div class="gauge-text"><span class="gauge-val" id="gaugeVal">0</span><span class="gauge-label">Moisture %</span></div></div>
+                            <div class="result-meta"><div class="rm-item"><span class="rm-label">Confidence</span><span class="rm-val" id="rmConf">--%</span></div><div class="rm-item"><span class="rm-label">Water Needed</span><span class="rm-val" id="rmWater">-- L/ha</span></div></div>
+                        </div>
+                        <div class="result-bars"><div class="rb"><span class="rb-label">No Irrigation</span><div class="rb-bar"><div class="rb-fill green" id="rbNo"></div></div><span class="rb-val" id="rbNoVal">--%</span></div><div class="rb"><span class="rb-label">Irrigate</span><div class="rb-bar"><div class="rb-fill amber" id="rbYes"></div></div><span class="rb-val" id="rbYesVal">--%</span></div></div>
+                        <div class="result-recs" id="resultRecs"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: Weather -->
+        <section class="tab-panel" id="tabWeather">
+            <div class="page-header"><h1>Real-Time <span class="g-text">Weather</span></h1><p>Live weather data with 7-day irrigation forecast</p></div>
+            <div class="weather-bar glass"><div class="wb-loc"><i data-lucide="map-pin"></i><span id="wLocName">Detecting...</span></div><span id="wTimestamp" class="wb-time"></span><button class="btn-sm" id="wRefreshBtn"><i data-lucide="refresh-cw"></i> Refresh</button></div>
+            <div class="weather-grid">
+                <div class="weather-now glass">
+                    <div class="wn-main"><div class="wn-temp" id="wnTemp">--°C</div><div class="wn-desc" id="wnDesc">Loading...</div><div class="wn-feels">Feels like <span id="wnFeels">--</span>°C</div></div>
+                    <div class="wn-details">
+                        <div class="wd"><i data-lucide="thermometer"></i><span>Temp</span><b id="wdT">--°C</b></div>
+                        <div class="wd"><i data-lucide="droplets"></i><span>Humidity</span><b id="wdH">--%</b></div>
+                        <div class="wd"><i data-lucide="cloud-rain"></i><span>Precip</span><b id="wdP">-- mm</b></div>
+                        <div class="wd"><i data-lucide="wind"></i><span>Wind</span><b id="wdW">-- km/h</b></div>
+                        <div class="wd"><i data-lucide="gauge"></i><span>Pressure</span><b id="wdPr">-- hPa</b></div>
+                        <div class="wd"><i data-lucide="cloud-drizzle"></i><span>Rainfall</span><b id="wdR">-- mm</b></div>
+                    </div>
+                    <button class="btn-primary btn-full" id="useWeatherBtn" style="margin-top:1rem"><i data-lucide="zap"></i> Use for Prediction</button>
+                </div>
+                <div class="weather-forecast glass">
+                    <h3><i data-lucide="calendar-days"></i> 7-Day Forecast & Irrigation</h3>
+                    <div class="forecast-list" id="forecastList"><p class="loading-text">Loading forecast...</p></div>
+                    <div class="forecast-chart-box"><canvas id="forecastChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: Analytics -->
+        <section class="tab-panel" id="tabAnalytics">
+            <div class="page-header"><h1>Data <span class="g-text">Analytics</span></h1><p>ML model performance and dataset insights</p></div>
+            <div class="analytics-kpis">
+                <div class="kpi glass"><div class="kpi-ic blue"><i data-lucide="target"></i></div><div><b id="aAccuracy">--</b><span>Accuracy</span></div></div>
+                <div class="kpi glass"><div class="kpi-ic green"><i data-lucide="database"></i></div><div><b id="aSamples">--</b><span>Samples</span></div></div>
+                <div class="kpi glass"><div class="kpi-ic amber"><i data-lucide="droplets"></i></div><div><b id="aRate">--</b><span>Irrigation Rate</span></div></div>
+                <div class="kpi glass"><div class="kpi-ic purple"><i data-lucide="brain"></i></div><div><b id="aModel">--</b><span>Algorithm</span></div></div>
+            </div>
+            <div class="analytics-charts">
+                <div class="chart-card glass wide"><div class="cc-head"><h3><i data-lucide="bar-chart-3"></i> Feature Importance</h3></div><div class="cc-body"><canvas id="chartFI"></canvas></div></div>
+                <div class="chart-card glass"><div class="cc-head"><h3><i data-lucide="grid-3x3"></i> Confusion Matrix</h3></div><div class="cc-body"><div class="cm-grid" id="cmGrid"></div></div></div>
+                <div class="chart-card glass wide"><div class="cc-head"><h3><i data-lucide="git-compare"></i> Feature Correlation</h3></div><div class="cc-body"><canvas id="chartCorr"></canvas></div></div>
+                <div class="chart-card glass"><div class="cc-head"><h3><i data-lucide="pie-chart"></i> Irrigation Split</h3></div><div class="cc-body"><canvas id="chartPie"></canvas></div></div>
+                <div class="chart-card glass full"><div class="cc-head"><h3><i data-lucide="bar-chart-horizontal"></i> Crop Irrigation Rates</h3></div><div class="cc-body tall"><canvas id="chartCrop"></canvas></div></div>
+                <div class="chart-card glass full"><div class="cc-head"><h3><i data-lucide="table-2"></i> Feature Statistics</h3></div><div class="cc-body"><table class="data-table" id="statsTable"><thead><tr><th>Feature</th><th>Min</th><th>Max</th><th>Mean</th><th>Std</th><th>Distribution</th></tr></thead><tbody id="statsTbody"></tbody></table></div></div>
+            </div>
+        </section>
+
+        <!-- TAB: Water Savings -->
+        <section class="tab-panel" id="tabSavings">
+            <div class="page-header"><h1>Water <span class="g-text">Savings</span></h1><p>Calculate how much water and money you save with smart irrigation</p></div>
+            <div class="savings-layout">
+                <div class="savings-input glass">
+                    <h3><i data-lucide="settings"></i> Your Farm Details</h3>
+                    <div class="input-group"><label>Farm Area (hectares)</label><input type="number" id="savArea" value="1" min="0.1" step="0.1"></div>
+                    <div class="input-group"><label>Manual Water Usage (litres/day)</label><input type="number" id="savManual" value="5000" min="100" step="100"></div>
+                    <div class="input-group"><label>Water Cost (₹ per 1000 litres)</label><input type="number" id="savCost" value="50" min="1" step="1"></div>
+                    <div class="input-group"><label>Crop Type</label><select id="savCrop"><option value="rice">Rice</option><option value="wheat">Wheat</option><option value="cotton">Cotton</option><option value="sugarcane">Sugarcane</option><option value="tomato">Tomato</option></select></div>
+                    <button class="btn-primary btn-full" id="calcSavingsBtn"><i data-lucide="calculator"></i> Calculate Savings</button>
+                </div>
+                <div class="savings-results">
+                    <div class="sav-card glass sav-hero"><div class="sav-big-icon">💧</div><h2>You Save</h2><div class="sav-big-val" id="savWeekly">-- litres</div><p>per week with smart irrigation</p></div>
+                    <div class="sav-card glass"><h3>💰 Money Saved</h3><div class="sav-val" id="savMoney">₹ --</div><p>per month</p></div>
+                    <div class="sav-card glass"><h3>📅 Yearly Savings</h3><div class="sav-val" id="savYearly">-- litres</div><p>projected annually</p></div>
+                    <div class="sav-card glass"><h3>🌱 Smart Usage</h3><div class="sav-val" id="savSmart">-- L/day</div><p>AI recommended daily</p></div>
+                    <div class="sav-card glass full"><div class="cc-body"><canvas id="chartSavings"></canvas></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: Crop Calendar -->
+        <section class="tab-panel" id="tabCalendar">
+            <div class="page-header"><h1>Crop <span class="g-text">Calendar</span></h1><p>12-month irrigation schedule by crop</p></div>
+            <div class="cal-controls glass">
+                <label>Select Crop:</label>
+                <select id="calCropSelect"><option value="rice">Rice</option><option value="wheat">Wheat</option><option value="maize">Maize</option><option value="cotton">Cotton</option><option value="sugarcane">Sugarcane</option><option value="tomato">Tomato</option><option value="potato">Potato</option><option value="banana">Banana</option><option value="mango">Mango</option></select>
+                <div class="cal-info"><span id="calSeason">--</span><span id="calWater">--</span></div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-legend"><span class="cl-item"><span class="cl-dot high"></span>Heavy Irrigation</span><span class="cl-item"><span class="cl-dot medium"></span>Moderate</span><span class="cl-item"><span class="cl-dot low"></span>Monsoon (Low)</span><span class="cl-item"><span class="cl-dot none"></span>Off Season</span></div>
+        </section>
+
+        <!-- TAB: Region Map -->
+        <section class="tab-panel" id="tabMap">
+            <div class="page-header"><h1>Region <span class="g-text">Map</span></h1><p>Click a marker for local irrigation advice</p></div>
+            <div class="map-layout">
+                <div class="map-container glass" id="mapWrapper" style="padding:0; overflow:hidden;">
+                    <div id="realMap" style="width:100%; height:100%; min-height:400px; z-index:1;"></div>
+                </div>
+                <div class="map-info glass" id="mapInfo"><div class="mi-placeholder"><i data-lucide="map-pin"></i><h3>Select a Region</h3><p>Click any state on the map for weather and irrigation advice</p></div></div>
+            </div>
+        </section>
+
+        <!-- TAB: Alerts -->
+        <section class="tab-panel" id="tabAlerts">
+            <div class="page-header"><h1>Smart <span class="g-text">Alerts</span></h1><p>AI-generated irrigation alerts and notifications</p></div>
+            <div class="alerts-list" id="alertsList"><p class="loading-text">Loading alerts...</p></div>
+        </section>
+
+        <!-- TAB: AI Chat -->
+        <section class="tab-panel" id="tabChat">
+            <div class="page-header"><h1>AI <span class="g-text">Assistant</span></h1><p>Ask anything about crops, irrigation, and farming</p></div>
+            <div class="chat-container glass">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-msg bot"><div class="chat-avatar">🤖</div><div class="chat-bubble">Hello! I'm AquaSmart AI. Ask me anything about irrigation, crops, weather, or farming! Try: <em>"Should I water my tomatoes today?"</em></div></div>
+                </div>
+                <div class="chat-input-bar">
+                    <input type="text" id="chatInput" placeholder="Ask about crops, irrigation, weather..." autocomplete="off">
+                    <button class="btn-primary" id="chatSendBtn"><i data-lucide="send"></i></button>
+                </div>
+                <div class="chat-suggestions">
+                    <button class="chat-sug" data-msg="Should I water my crops today?">💧 Water today?</button>
+                    <button class="chat-sug" data-msg="How much water does rice need?">🌾 Rice water need</button>
+                    <button class="chat-sug" data-msg="What about monsoon season?">🌧️ Monsoon tips</button>
+                    <button class="chat-sug" data-msg="How can I save water?">💰 Save water</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: Export -->
+        <section class="tab-panel" id="tabExport">
+            <div class="page-header"><h1>Export & <span class="g-text">Report</span></h1><p>Download reports and share irrigation plans</p></div>
+            <div class="export-grid">
+                <div class="export-card glass" id="exportPDF"><div class="ec-icon">📄</div><h3>PDF Report</h3><p>Download current prediction as a formatted PDF report</p><button class="btn-primary" onclick="exportPDF()"><i data-lucide="download"></i> Download PDF</button></div>
+                <div class="export-card glass" id="exportCSV"><div class="ec-icon">📊</div><h3>CSV Forecast</h3><p>Export 7-day forecast data as CSV (Excel compatible)</p><button class="btn-primary" onclick="exportCSV()"><i data-lucide="file-spreadsheet"></i> Export CSV</button></div>
+                <div class="export-card glass" id="exportWhatsApp"><div class="ec-icon">📱</div><h3>Share via WhatsApp</h3><p>Share today's irrigation plan with your farm team</p><button class="btn-primary" onclick="shareWhatsApp()"><i data-lucide="share-2"></i> Share Now</button></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"><div class="spinner-ring"></div><i data-lucide="droplets"></i></div><p>Analyzing...</p></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
