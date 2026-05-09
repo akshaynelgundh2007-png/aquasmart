@@ -58,9 +58,8 @@ python train_model.py
 
 ## 🌐 Deployment
 
-This application is configured for easy deployment on **Render** using Gunicorn as the WSGI HTTP server.
-- **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `gunicorn app:app`
+This application is configured for easy deployment on **Vercel** using Serverless Functions.
+A `vercel.json` configuration file is included to automatically route requests to the Flask backend.
 
 ## 📄 License
 
