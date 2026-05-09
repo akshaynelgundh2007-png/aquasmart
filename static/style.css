@@ -56,3 +56,16 @@ input[type="number"],input[type="text"],select{width:100%;padding:10px 12px;bord
 #resultEmpty{text-align:center;padding:40px}#resultEmpty h3{color:var(--text2);margin-bottom:6px}#resultEmpty p{color:var(--text3);font-size:.85rem}
 @media(max-width:1024px){.predict-layout,.weather-grid,.map-layout,.savings-layout{grid-template-columns:1fr}.analytics-kpis{grid-template-columns:1fr 1fr}.analytics-charts{grid-template-columns:1fr}.chart-card.wide{grid-column:span 1}.input-row{grid-template-columns:1fr 1fr}.cal-grid{grid-template-columns:repeat(3,1fr)}.export-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-close{display:block}.mobile-header{display:flex}.main-content{margin-left:0;padding:16px;padding-top:72px}.home-grid{grid-template-columns:1fr}.card-status{grid-column:span 1}.input-row{grid-template-columns:1fr}.analytics-kpis{grid-template-columns:1fr}.cal-grid{grid-template-columns:repeat(2,1fr)}.export-grid{grid-template-columns:1fr}.map-grid{grid-template-columns:repeat(3,1fr)}}
+
+
+/* Print & PDF Export Styles */
+@media print {
+    body, html { background: white !important; color: black !important; }
+    .sidebar, .mobile-header, #tabExport, .page-header, .btn-primary, .input-panel { display: none !important; }
+    .main-content { margin: 0 !important; padding: 20px !important; }
+    .tab-panel.print-show { display: block !important; page-break-after: always; }
+    .glass { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; color: black !important; }
+    * { -webkit-text-fill-color: black !important; color: black !important; text-shadow: none !important; }
+    canvas { max-width: 100% !important; }
+    #tabPredict, #tabWeather, #tabAnalytics { display: block !important; }
+}

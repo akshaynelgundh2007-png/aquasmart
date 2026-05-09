@@ -271,7 +271,12 @@ async function loadCities(){try{const r=await fetch('/api/cities');const d=await
 d.cities.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)})}catch(e){}}
 
 // Export
-function exportPDF(){window.print()}
+function exportPDF(){
+    const pre=document.querySelectorAll('.tab-panel');
+    pre.forEach(p=>p.classList.add('print-show'));
+    window.print();
+    pre.forEach(p=>p.classList.remove('print-show'));
+}
 function exportCSV(){if(!forecastPredictions)return alert('Load weather first');
 let csv='Date,Temperature,Humidity,Rainfall,Soil Moisture,Irrigation Needed,Confidence\n';
 forecastPredictions.forEach(p=>{csv+=`${p.date},${p.temperature},${p.humidity},${p.rainfall},${p.soil_moisture},${p.irrigation_needed?'Yes':'No'},${p.confidence}%\n`});
