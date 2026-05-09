@@ -123,7 +123,15 @@ document.getElementById(id).value=R(...ranges[i])})}
 function fillFromWeather(){if(!weatherData?.current)return alert('Weather not loaded yet');const c=weatherData.current;
 const set=(id,v)=>{if(v!=null)document.getElementById(id).value=parseFloat(v).toFixed(1)};
 set('inputTemp',c.temperature);set('inputHumidity',c.humidity);set('inputRainfall',weatherData.total_recent_rainfall||c.precipitation||50);
-const m=Math.min(90,Math.max(10,(c.humidity||50)*.4+((weatherData.total_recent_rainfall||0)/300*30)+15));set('inputMoisture',m);
+if (weatherData.soil) {
+    const s = weatherData.soil;
+    set('inputN', s.N); set('inputP', s.P); set('inputK', s.K); set('inputPH', s.ph);
+    if(s.moisture !== null) set('inputMoisture', s.moisture);
+    else { const m=Math.min(90,Math.max(10,(c.humidity||50)*.4+((weatherData.total_recent_rainfall||0)/300*30)+15));set('inputMoisture',m); }
+    if(s.type) document.getElementById('soilSelect').value = s.type;
+} else {
+    const m=Math.min(90,Math.max(10,(c.humidity||50)*.4+((weatherData.total_recent_rainfall||0)/300*30)+15));set('inputMoisture',m);
+}
 switchTab('predict')}
 async function handlePredict(e){e.preventDefault();document.getElementById('loadingOverlay').classList.add('show');
 const g=id=>parseFloat(document.getElementById(id).value);

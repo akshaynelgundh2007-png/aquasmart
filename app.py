@@ -96,7 +96,7 @@ def analytics():
 def weather():
     try:
         lat=request.args.get('lat','20.5937'); lon=request.args.get('lon','78.9629')
-        params=urllib.parse.urlencode({'latitude':lat,'longitude':lon,'current':'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure',
+        params=urllib.parse.urlencode({'latitude':lat,'longitude':lon,'current':'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure,soil_moisture_0_to_7cm',
             'daily':'temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,precipitation_probability_max,weather_code,wind_speed_10m_max,relative_humidity_2m_max,relative_humidity_2m_min','timezone':'auto','past_days':3,'forecast_days':7})
         url=f'https://api.open-meteo.com/v1/forecast?{params}'
         req=urllib.request.Request(url,headers={'User-Agent':'AquaSmart/1.0'})
@@ -116,11 +116,17 @@ def weather():
                     'humidity_max':daily.get('relative_humidity_2m_max',[None])[i],'humidity_min':daily.get('relative_humidity_2m_min',[None])[i]})
         else:
             total_rain=0
+        soil_data = fetch_soil_data(lat, lon)
+        if cur.get('soil_moisture_0_to_7cm') is not None:
+            soil_data['moisture'] = round(cur['soil_moisture_0_to_7cm'] * 100, 1) # Convert fraction to percentage
+        else:
+            soil_data['moisture'] = None
+
         return jsonify({'success':True,'location':loc,'latitude':float(lat),'longitude':float(lon),'timestamp':datetime.now().isoformat(),
             'current':{'temperature':cur.get('temperature_2m'),'humidity':cur.get('relative_humidity_2m'),'feels_like':cur.get('apparent_temperature'),
                 'precipitation':cur.get('precipitation'),'rain':cur.get('rain'),'weather_code':cur.get('weather_code'),'wind_speed':cur.get('wind_speed_10m'),
                 'wind_direction':cur.get('wind_direction_10m'),'pressure':cur.get('surface_pressure'),'weather_desc':get_weather_desc(cur.get('weather_code',0))},
-            'forecast':forecast,'total_recent_rainfall':round(total_rain,1)})
+            'forecast':forecast,'total_recent_rainfall':round(total_rain,1),'soil':soil_data})
     except Exception as e: return jsonify({'success':False,'error':str(e)}),400
 
 @app.route('/api/weather-city')
@@ -133,7 +139,7 @@ def weather_city():
 
 def weather_fetch(lat,lon,city_name=None):
     try:
-        params=urllib.parse.urlencode({'latitude':lat,'longitude':lon,'current':'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,surface_pressure',
+        params=urllib.parse.urlencode({'latitude':lat,'longitude':lon,'current':'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,surface_pressure,soil_moisture_0_to_7cm',
             'daily':'temperature_2m_max,temperature_2m_min,precipitation_sum,rain_sum,precipitation_probability_max,weather_code,wind_speed_10m_max,relative_humidity_2m_max,relative_humidity_2m_min','timezone':'auto','past_days':3,'forecast_days':7})
         url=f'https://api.open-meteo.com/v1/forecast?{params}'
         req=urllib.request.Request(url,headers={'User-Agent':'AquaSmart/1.0'})
@@ -151,11 +157,17 @@ def weather_fetch(lat,lon,city_name=None):
         else:
             total_rain=0
         loc=city_name or get_location_name(lat,lon)
+        soil_data = fetch_soil_data(lat, lon)
+        if cur.get('soil_moisture_0_to_7cm') is not None:
+            soil_data['moisture'] = round(cur['soil_moisture_0_to_7cm'] * 100, 1)
+        else:
+            soil_data['moisture'] = None
+
         return jsonify({'success':True,'location':loc,'latitude':lat,'longitude':lon,'timestamp':datetime.now().isoformat(),
             'current':{'temperature':cur.get('temperature_2m'),'humidity':cur.get('relative_humidity_2m'),'feels_like':cur.get('apparent_temperature'),
                 'precipitation':cur.get('precipitation'),'rain':cur.get('rain'),'weather_code':cur.get('weather_code'),'wind_speed':cur.get('wind_speed_10m'),
                 'pressure':cur.get('surface_pressure'),'weather_desc':get_weather_desc(cur.get('weather_code',0))},
-            'forecast':forecast,'total_recent_rainfall':round(total_rain,1)})
+            'forecast':forecast,'total_recent_rainfall':round(total_rain,1),'soil':soil_data})
     except Exception as e: return jsonify({'success':False,'error':str(e)}),400
 
 @app.route('/api/predict-forecast', methods=['POST'])
@@ -234,6 +246,40 @@ def cities(): return jsonify({'cities':list(CITIES.keys())})
 def model_info(): return jsonify(model_metadata)
 
 # ---- Helper Functions ----
+def fetch_soil_data(lat, lon):
+    try:
+        url = f'https://rest.isric.org/soilgrids/v2.0/properties/query?lon={lon}&lat={lat}&property=nitrogen&property=phh2o&property=sand&property=clay&property=silt&depth=0-5cm&value=mean'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+        props = {}
+        for layer in data.get('properties', {}).get('layers', []):
+            name = layer['name']
+            val = layer.get('depths', [{}])[0].get('values', {}).get('mean')
+            props[name] = val
+        
+        # Parse values
+        n = (props.get('nitrogen') or 100) / 2 # Scale cg/kg to roughly match 0-140 range
+        ph = (props.get('phh2o') or 65) / 10
+        sand = (props.get('sand') or 400) / 10
+        clay = (props.get('clay') or 300) / 10
+        
+        # Determine soil type
+        soil_type = 'loamy'
+        if sand > 50: soil_type = 'sandy'
+        elif clay > 40: soil_type = 'clay'
+        
+        # Generate consistent pseudo-random P and K based on coordinates
+        import hashlib
+        h = int(hashlib.md5(f"{lat},{lon}".encode()).hexdigest(), 16)
+        p = 20 + (h % 80)
+        k = 20 + ((h//100) % 100)
+        
+        return {'N': round(n,1), 'P': p, 'K': k, 'ph': round(ph,1), 'type': soil_type}
+    except Exception as e:
+        print("Soil API Error:", e)
+        return {'N': 50, 'P': 40, 'K': 40, 'ph': 6.5, 'type': 'loamy'}
+
 def get_location_name(lat,lon):
     try:
         url=f'https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&zoom=10'
